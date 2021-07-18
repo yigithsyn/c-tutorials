@@ -14,7 +14,7 @@ int main()
   char filename[] = "object.json";
   char filepath[256] = {'\0'};
 
-  sprintf(filepath, "%s/%s", ASSETS_DIR, "object.json");
+  sprintf(filepath, "%s/%s", ASSETS_DIR, "json/object.json");
   fprintf(stdout, "-- Reading file: \'%s\'... ", filepath);
   FILE *file = fopen(filepath, "r");
   if (file == NULL)
