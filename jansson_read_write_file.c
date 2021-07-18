@@ -49,71 +49,8 @@ int main()
   else
     fprintf(stdout, "Object.");
 
-  if (json_is_array(json))
-  {
-    fprintf(stdout, "\n-- Edit json ... Editing first element's key 'id'. Before: \n");
-    //   json1 = json_array_get(json, 0);
-    //   bufc = json_dumps(json1, JSON_INDENT(2));
-    //   printf("%s", bufc);
-    //   free(bufc);
-    //   fprintf(stdout, "\n-- Edit json ... Editing first element's key 'id'. Checking if first element is object ... ");
-    //   if (json_is_object(json1))
-    //   {
-    //     fprintf(stdout, "Passed.");
-    //     fprintf(stdout, "\n-- Edit json ... Editing first element's key 'id'. Checking if key value is string ... ");
-    //     json2 = json_object_get(json1, "id");
-    //     if (json_is_string(json2))
-    //     {
-    //       fprintf(stdout, "Passed.");
-    //     }
-    //     else
-    //     {
-    //       fprintf(stdout, "Failed.");
-    //       json_decref(json);
-    //       exit(1);
-    //     }
-    //     fprintf(stdout, "\n-- Edit json ... Editing first element's key 'id'. Setting new value ... ");
-    //     json3 = json_string("abcde");
-    //     if (json_object_set(json1, "id", json3) == -1)
-    //     {
-    //       fprintf(stdout, "Failed.");
-    //       json_decref(json);
-    //       exit(1);
-    //     }
-    //     fprintf(stdout, "Passed.");
-    //     fprintf(stdout, "\n-- Edit json ... Editing first element's key 'id'. After: \n");
-    //     bufc = json_dumps(json1, JSON_INDENT(2));
-    //     printf("%s", bufc);
-    //     free(bufc);
-
-    //     fprintf(stdout, "\n-- Edit json ... Editing first element's key 'id'. Write to new file ... ");
-    //     bufc = json_dumps(json, JSON_INDENT(2));
-    //     file = fopen("written.json", "w+");
-    //     if (file == NULL)
-    //     {
-    //       fprintf(stdout, "Failed.");
-    //       json_decref(json);
-    //       json_decref(json1);
-    //       json_decref(json2);
-    //       json_decref(json3);
-    //       exit(1);
-    //     }
-    //     fputs(bufc, file);
-    //     fprintf(stdout, "Passed.");
-    //     fclose(file);
-    //     free(bufc);
-    //   }
-    //   else
-    //   {
-    //     fprintf(stdout, "Failed.");
-    //     json_decref(json);
-    //     json_decref(json1);
-    //     json_decref(json2);
-    //     json_decref(json3);
-    //     exit(1);
-    //   }
-  }
-  else
+  /* Editing */
+  if (json_is_object(json))
   {
     printf("\n-- Edit json ... Editing nested key value 'quiz.sport.q1.question' ...");
     bufc = json_dumps(json, JSON_INDENT(2));
@@ -182,23 +119,8 @@ int main()
       exit(1);
     }
     printf("\nPassed.");
-    
   }
 
-      // // bufc = json_dumps(json, JSON_INDENT(2));
-      // // printf("%s", bufc);
-      // free(bufc);
-      json_decref(json);
-  // json_decref(json1);
-  // json_decref(json2);
-  // json_decref(json3);
-  // file = fopen("written.json", "w+");
-  // if (file != NULL)
-  // {
-  //   fputs(bufc, file);
-  //   fclose(file);
-  // }
-  // free(bufc);
   json_decref(json);
 
   return 0;
