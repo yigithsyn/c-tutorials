@@ -1,0 +1,36 @@
+cmake_minimum_required(VERSION 3.0.0)
+project(c-tutorials VERSION 0.1.0)
+
+add_definitions(-DASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
+if (WIN32)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif (WIN32)
+
+if (UNIX)
+  set ( PROJECT_LINK_LIBS libcivetweb.so pthread)
+  link_directories( ${CMAKE_CURRENT_SOURCE_DIR}/civetweb )
+  MESSAGE ( STATUS ${CMAKE_CURRENT_SOURCE_DIR}/civetweb )
+endif (UNIX)
+
+if (WIN32)
+  execute_process(COMMAND "git submodule init" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  execute_process(COMMAND "git submodule update" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/bootstrap.bat")
+  execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/vcpkg.exe" "integrate" "install")
+  execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/vcpkg.exe" "install" "civetweb")
+  execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/vcpkg.exe" "install" "jansson")
+endif (WIN32)
+
+add_executable(wchar_stdin_stdout wchar_stdin_stdout.c)
+add_executable(wchar_mkdir wchar_mkdir.c)
+
+add_executable(civetweb_http_server civetweb_http_server.c)
+add_executable(civetweb_http_server_rest civetweb_http_server_rest.c)
+add_executable(civetweb_http_server_file_upload civetweb_http_server_file_upload.c)
+target_link_libraries(civetweb_http_server ${PROJECT_LINK_LIBS})
+target_link_libraries(civetweb_http_server_rest ${PROJECT_LINK_LIBS})
+target_link_libraries(civetweb_http_server_file_upload ${PROJECT_LINK_LIBS})
+
+add_executable(jansson_json_construct jansson_json_construct.c)
+add_executable(jansson_json_parse jansson_json_parse.c)
+add_executable(jansson_read_write_file jansson_read_write_file.c) 

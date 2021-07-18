@@ -1,0 +1,265 @@
+//==============================================================================
+// Configuration
+//==============================================================================
+#define HTTP_PORT "3001"
+#define UPLOAD_FOLDER "C:\\Users\\hsyn\\Desktop"
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <direct.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include "civetweb.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
+static inline void SLEEP(int x)
+{
+#ifdef _WIN32
+  Sleep(x * 1000);
+#else
+  sleep(x);
+#endif
+}
+
+static int EXITNOW = 0;
+
+int log_message(const struct mg_connection *conn, const char *message)
+{
+  printf("\n[CIVETWEB] {\"event\": \"error\", \"msg\": \"%s\"}", message);
+  fflush(stdout);
+  return 1;
+}
+//==============================================================================
+// HTTP Handler
+//==============================================================================
+#pragma warning(disable : 4996)
+
+static int http_handler(struct mg_connection *conn, void *cbdata)
+{
+
+  mg_printf(conn,
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+            "close\r\n\r\n");
+
+  mg_printf(conn, "<!DOCTYPE html>\n");
+  mg_printf(conn, "<html>\n<head>\n");
+  mg_printf(conn, "<meta charset=\"UTF-8\">\n");
+  mg_printf(conn, "<title>File upload</title>\n");
+  mg_printf(conn, "</head>\n<body>\n");
+  mg_printf(conn,
+            "<form action=\"fileupload\" method=\"POST\" "
+            "enctype=\"multipart/form-data\">\n");
+  mg_printf(conn, "<input type=\"file\" name=\"filesin\">\n");
+  mg_printf(conn, "<input type=\"text\" name=\"textin\" value=\"atext\" hidden>\n");
+  mg_printf(conn, "<input type=\"submit\" value=\"Submit\">\n");
+  mg_printf(conn, "</form>\n");
+  mg_printf(conn,
+            "<form action=\"fileupload\" method=\"POST\" "
+            "enctype=\"multipart/form-data\">\n");
+  mg_printf(conn, "<input type=\"file\" name=\"filesin\"  multiple>\n");
+  mg_printf(conn, "<input type=\"submit\" value=\"Submit\">\n");
+  mg_printf(conn, "</form>\n");
+  mg_printf(conn,
+            "<form action=\"fileupload\" method=\"POST\" "
+            "enctype=\"multipart/form-data\">\n");
+  mg_printf(conn, "<input type=\"file\" name=\"filesin\" webkitdirectory multiple>\n");
+  mg_printf(conn, "<input type=\"submit\" value=\"Submit\">\n");
+  mg_printf(conn, "</form>\n");
+  mg_printf(conn, "</body>\n</html>\n");
+  return 1;
+}
+
+int field_found(const char *key,
+                const char *filename,
+                char *path,
+                size_t pathlen,
+                void *user_data)
+{
+  struct mg_connection *conn = (struct mg_connection *)user_data;
+
+  printf("[field_found] %s: %s in %s\n", key, filename, path);
+  mg_printf(conn, "\r\n\r\n%s:\r\n", key);
+
+  if (filename && *filename)
+  {
+    char fullpath[256] = {'\0'};
+    sprintf(fullpath, "%s", UPLOAD_FOLDER);
+    printf("Upload folder: %s\n", fullpath);
+
+    char relpath[256] = {'\0'};
+    sprintf(relpath, "%s", filename);
+    printf("Uploaded file relative path: %s\n", relpath);
+
+    char *token = strtok(relpath, "/");
+    // loop through the string to extract all other tokens
+    while (token != NULL)
+    {
+      // printf("Directory: %s\n", token); //printing each token
+      // struct stat st = {0};
+      char directory[256] = {'\0'};
+      char fname[256] = {'\0'};
+      sprintf(directory, "%s", token);
+
+      /* fetch directory or file name */
+      token = strtok(NULL, "/");
+      if (token == NULL)
+      {
+        sprintf(fname, "%s", directory);
+        directory[0] = '\0';
+      }
+      else
+        fname[0] = '\0';
+
+      /* switch according to path type directory/file */
+      if (directory[0] != '\0')
+      {
+        sprintf(fullpath, "%s\\%s", fullpath, directory);
+        printf("Directory to be created: %s\n", fullpath);
+        struct stat st = {0};
+        if (stat(fullpath, &st) == -1)
+        {
+#ifdef _WIN32
+          // mkdir(fullpath);
+          wchar_t wbuf[256];
+          MultiByteToWideChar(CP_UTF8, 0, fullpath, -1, wbuf,256);
+          _wmkdir(wbuf);
+#else
+          mkdir(fullpath);
+#endif
+        }
+      }
+      if (fname[0] != '\0')
+      {
+        sprintf(fullpath, "%s\\%s", fullpath, fname);
+        printf("File will be saved as: %s\n", fullpath);
+      }
+    }
+#ifdef _WIN32
+    _snprintf(path, pathlen, "%s", fullpath);
+#else
+    snprintf(path, pathlen, "%s", fullpath);
+#endif
+    return MG_FORM_FIELD_STORAGE_STORE;
+  }
+  return MG_FORM_FIELD_STORAGE_GET;
+}
+
+int field_get(const char *key, const char *value, size_t valuelen, void *user_data)
+{
+  printf("[field_get] %s %lu %s\n", key, valuelen, value);
+
+  struct mg_connection *conn = (struct mg_connection *)user_data;
+
+  /* Incorrect form data detected */
+  if ((key != NULL) && (key[0] == '\0'))
+    return MG_FORM_FIELD_HANDLE_ABORT;
+  /* Unreachable, since this call will not be generated by civetweb. */
+  if ((valuelen > 0) && (value == NULL))
+    return MG_FORM_FIELD_HANDLE_ABORT;
+
+  if (key)
+    mg_printf(conn, "key = %s, value=%.*s\n", key, valuelen, value);
+  mg_printf(conn, "valuelen = %lu\n", valuelen);
+  return 0;
+}
+
+int field_stored(const char *path, long long file_size, void *user_data)
+{
+  struct mg_connection *conn = (struct mg_connection *)user_data;
+  mg_printf(conn, "stored as %s (%lu bytes)\r\n\r\n", path, (unsigned long)file_size);
+  return 0;
+}
+
+static int file_handler(struct mg_connection *conn, void *cbdata)
+{
+  /* Handler may access the request info using mg_get_request_info */
+  const struct mg_request_info *req_info = mg_get_request_info(conn);
+  int ret;
+  struct mg_form_data_handler fdh = {field_found, field_get, field_stored, 0};
+
+  /* It would be possible to check the request info here before calling
+	 * mg_handle_form_request. */
+  (void)req_info;
+
+  mg_printf(conn,
+            "HTTP/1.1 200 OK\r\nContent-Type: "
+            "text/plain\r\nConnection: close\r\n\r\n");
+  fdh.user_data = (void *)conn;
+
+  /* Call the form handler */
+  mg_printf(conn, "Form data:");
+  ret = mg_handle_form_request(conn, &fdh);
+  mg_printf(conn, "\r\n%i fields found", ret);
+
+  return 1;
+}
+
+int main(int argc, char *argv[])
+{
+  /* options */
+  const char *options[] = {"listening_ports",
+                           HTTP_PORT,
+                           "request_timeout_ms",
+                           "10000",
+                           "error_log_file",
+                           "error.log",
+                           "enable_auth_domain_check",
+                           "no",
+                           0};
+
+  struct mg_callbacks callbacks;
+  struct mg_context *ctx;
+
+  /* initialize */
+  printf("[INFO] Initializing civetweb library ... ");
+  fflush(stdout);
+  if (mg_init_library(0))
+  {
+    fprintf(stderr, "[ERROR] Cannot start CivetWeb -inconsistent build.\n");
+    fflush(stderr);
+    return EXIT_FAILURE;
+  }
+  printf("OK.\n");
+  fflush(stdout);
+
+  /* Callback will print error messages to console */
+  memset(&callbacks, 0, sizeof(callbacks));
+  callbacks.log_message = log_message;
+
+  /* start CivetWeb web server */
+  printf("[INFO] Starting websocket server ... ");
+  fflush(stdout);
+  ctx = mg_start(&callbacks, 0, options);
+  if (!ctx)
+  {
+    fprintf(stderr, "\n[ERROR] Cannot start websocket server.\n");
+    fflush(stderr);
+    return EXIT_FAILURE;
+  }
+  printf("OK.\n");
+  fflush(stdout);
+
+  // Request handler
+  mg_set_request_handler(ctx, "/", http_handler, (void *)"html");
+  mg_set_request_handler(ctx, "/fileupload", file_handler, NULL);
+  printf("[INFO] HTTP server: http://localhost:%s\n", HTTP_PORT);
+  fflush(stdout);
+
+  /* Wait until the server should be closed */
+  while (!EXITNOW)
+  {
+    SLEEP(100);
+  }
+
+  /* Stop the server */
+  mg_stop(ctx);
+
+  return EXIT_SUCCESS;
+}
