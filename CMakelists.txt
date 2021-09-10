@@ -48,3 +48,5 @@ add_executable(jansson_read_write_file jansson_read_write_file.c)
 add_executable(jansson_nested_object jansson_nested_object.c) 
 
 add_executable(time_local_utc time_local_utc.c) 
+
+add_executable(win32_subprocess win32_subprocess.c) 
