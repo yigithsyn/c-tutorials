@@ -51,3 +51,5 @@ add_executable(time_local_utc time_local_utc.c)
 
 add_executable(win32_subprocess win32_subprocess.c) 
 add_executable(win32_subprocess_detached win32_subprocess_detached.c) 
+
+add_executable(io_check_stdin io_check_stdin.c) 
