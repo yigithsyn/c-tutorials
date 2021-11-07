@@ -21,6 +21,18 @@ int main()
     scanf("%s %d", str, &i);
 
     printf("You entered: %s %d ", str, i);
+
+    /* fgets version */
+    //  char *text = calloc(1, 1), buffer[100];
+    // printf("Enter a message: \n");
+    // while (fgets(buffer, 100, stdin)) /* break with ^D or ^Z */
+    // {
+    //   text = realloc(text, strlen(text) + 1 + strlen(buffer));
+      // if( !text ) ... /* error handling */
+      // strcat(text, buffer); /* note a '\n' is appended here everytime */
+      // printf("%s", buffer);
+    // }
+    // printf("\ntext:\n%s", text);
   }
 
   return 0;
